@@ -18,6 +18,7 @@ local $ENV{NPG_CACHED_SAMPLESHEET_FILE} = q[t/data/samplesheet_1234.csv];
     is_indexed     => 0,
     timestamp      => q{20090709-123456},
   );
+
   isa_ok( $fq_loader, q{npg_pipeline::function::fastqcheck_archiver});
 
   my $da = $fq_loader->create();
