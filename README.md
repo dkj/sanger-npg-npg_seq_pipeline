@@ -23,11 +23,14 @@ initialised. As such, a _submitted_ pipeline does not have an orchestration
 script or daemon running: managing the runtime dependencies of jobs within an
 instance of a pipeline is delegated to the batch/job processing system.
 
-How is this done? The job representing the start point of a graph is submitted
-to LSF, or wr, in a suspended state and is resumed once all other jobs have been
-submitted thus ensuring that the execution starts only if all steps are
-successfully submitted to LSF, or wr. If an error occurs at any point during job
-submissions, all submitted jobs, apart from the start job, are killed.
+How is this done? Jobs are submitted to LSF, or wr, with the dependency on jobs
+from the previous step in the DAG (see below). It is then LSF, or wr, which
+starts jobs when the appropriate prerequisite processing has completed. The job
+representing the start point of a graph is submitted to LSF, or wr, in a
+suspended state and is resumed once all other jobs have been submitted thus
+ensuring that the execution starts only if all steps are successfully submitted
+to LSF, or wr. If an error occurs at any point during job submissions, all
+submitted jobs, apart from the start job, are killed.
 
 ## Pipeline Creation
 
