@@ -1,6 +1,6 @@
 use strict;
 use warnings;
-use Test::More tests => 35;
+use Test::More tests => 36;
 use Test::Exception;
 use File::Temp qw/tempdir/;
 use File::Slurp qw/read_file/;
@@ -44,7 +44,7 @@ local $ENV{NPG_CACHED_SAMPLESHEET_FILE} = '';
                                     mlwh_schema      => $wh_schema,
                                     cache_location   => $tempdir);
   throws_ok { $cache->lims }
-    qr/id_flowcell_lims \(batch id\) is required/,
+    qr/id_flowcell_lims \(LIMS ID for flowcell or wafer\) is required/,
     'cannot retrieve lims objects';
 
   $cache = npg_pipeline::cache->new(id_run           => 12376, 
@@ -86,6 +86,35 @@ local $ENV{NPG_CACHED_SAMPLESHEET_FILE} = '';
   like($ss, qr/6133STDY8786700/smx, 'Elembio samplesheet contains expected sample');
   like($ss, qr/MPN[ ]Whole[ ]Genomes/smx, 'Elembio samplesheet contains expected study');
 }
+
+subtest 'Ultima cache uses the full LIMS wafer identifier' => sub {
+  my $tempdir = tempdir(CLEANUP => 1);
+  my $wafer_id = '107185_NT1882031W_2';
+  my $cache = npg_pipeline::cache->new(
+    id_run           => 51815,
+    mlwh_schema      => $wh_schema_cross_platform,
+    id_flowcell_lims => $wafer_id,
+    cache_location   => $tempdir,
+  );
+  is($cache->driver_type, 'ml_warehouse_flowcell',
+    'Ultima driver detected using wafer ID');
+  my $lims = $cache->lims;
+  is(scalar @{$lims}, 7, 'wafer-linked Ultima libraries retrieved');
+  is($lims->[0]->id_flowcell_lims, $wafer_id, 'wafer ID propagated to driver');
+  is($lims->[0]->tag_index, 97, 'expected first Ultima tag');
+  is($lims->[0]->tag_sequence, 'CAGTCAGTTGCAGAT', 'expected Ultima index sequence');
+
+  my $batch_cache = npg_pipeline::cache->new(
+    id_run           => 51815,
+    mlwh_schema      => $wh_schema_cross_platform,
+    id_flowcell_lims => 107185,
+    cache_location   => $tempdir,
+  );
+  throws_ok { $batch_cache->driver_type }
+    qr/Unable to determine MLWH LIMS driver for id_flowcell_lims 107185/,
+    'batch number alone does not select a wafer';
+  done_testing;
+};
 
 {
   my $tempdir = tempdir( CLEANUP => 1);

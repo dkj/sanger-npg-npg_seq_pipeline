@@ -46,8 +46,9 @@ Integer run id, required.
 
 =head2 id_flowcell_lims
 
-LIMS specific flowcell id, an optional attribute for creating an instance
-of the object, will be required for a lazy-build of the C<lims> attribute
+LIMS-specific flowcell identifier, or the full C<UseqWafer.id_wafer_lims>
+identifier for Ultima Genomics (not C<batch_for_opentrons>). Optional when
+creating an instance, but required for a lazy-build of the C<lims> attribute
 of the run.
 
 =head2 mlwh_schema
@@ -99,12 +100,12 @@ sub _build_driver_type {
   my $self = shift;
 
   $self->id_flowcell_lims or
-    croak 'id_flowcell_lims (batch id) is required';
+    croak 'id_flowcell_lims (LIMS ID for flowcell or wafer) is required';
 
   my @checks = (
     [q{ml_warehouse_flowcell}, q{EseqFlowcell}, {id_flowcell_lims    => $self->id_flowcell_lims}],
     [q{ml_warehouse_flowcell}, q{IseqFlowcell}, {id_flowcell_lims    => $self->id_flowcell_lims}],
-    [q{ml_warehouse_flowcell}, q{UseqWafer},    {batch_for_opentrons => $self->id_flowcell_lims}],
+    [q{ml_warehouse_flowcell}, q{UseqWafer},    {id_wafer_lims       => $self->id_flowcell_lims}],
   );
 
   my $driver_type = first {
@@ -277,7 +278,7 @@ sub _lims_driver_init {
 
   if ($self->driver_type eq q{ml_warehouse_flowcell} &&
       !$self->id_flowcell_lims) {
-    croak 'id_flowcell_lims (batch id) is required';
+    croak 'id_flowcell_lims (LIMS ID for flowcell or wafer) is required';
   }
 
   if ($self->id_flowcell_lims) {
